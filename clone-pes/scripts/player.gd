@@ -29,6 +29,8 @@ const MODEL_PATH := "res://assets/models/UAL2_Standard.glb"
 @export var idle_anim: String = "Idle_No_Loop"
 @export var move_anim: String = "Walk_Carry_Loop"
 @export var stumble_anim: String = "Hit_Knockback"
+## Acelera la caminata para que parezca trote/carrera (1.0 = normal).
+@export var move_anim_speed: float = 1.8
 
 var _anim: AnimationPlayer = null
 var _cur_anim: String = ""
@@ -71,6 +73,7 @@ func _physics_process(delta: float) -> void:
 		velocity.z = 0.0
 		move_and_slide()
 		if _anim and _stumble_resolved != "":
+			_anim.speed_scale = 1.0
 			_play(_stumble_resolved)
 		return
 
@@ -94,10 +97,15 @@ func _physics_process(delta: float) -> void:
 		var target_angle := atan2(direction.x, direction.z)
 		rotation.y = lerp_angle(rotation.y, target_angle, 12.0 * delta)
 
-	# Animación: caminar si se mueve, idle si está quieto.
+	# Animación: "trotar" (caminata acelerada) si se mueve, idle si está quieto.
 	if _anim:
 		var planar_speed := Vector2(velocity.x, velocity.z).length()
-		_play(_move_resolved if planar_speed > 0.5 else _idle_resolved)
+		if planar_speed > 0.5:
+			_anim.speed_scale = move_anim_speed
+			_play(_move_resolved)
+		else:
+			_anim.speed_scale = 1.0
+			_play(_idle_resolved)
 
 ## Carga el modelo 3D y lo prepara; si el .glb no está importado, no hace nada
 ## (el jugador queda como cápsula).

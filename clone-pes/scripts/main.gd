@@ -12,14 +12,20 @@ extends Node3D
 ## Dónde reaparece la pelota tras un gol.
 @export var reset_position: Vector3 = Vector3(0, 1, 0)
 
-const GOAL_X := 20.0           ## X (absoluto) de la línea de gol
+const GOAL_X := 28.0           ## X (absoluto) de la línea de gol
 const CAPTURE_RADIUS := 1.1    ## a qué distancia se agarra una pelota suelta
 const TACKLE_RADIUS := 1.1     ## a qué distancia se puede robar
 const PROTECT_TIME := 1.1      ## segundos sin poder ser robado tras ganar la pelota
 const LOOSE_LOCK := 0.25       ## tras un tiro, instante sin poder recapturar
 const DRIBBLE_OFFSET := 0.9    ## qué tan adelante se lleva la pelota
-const BALL_Y := 0.35           ## altura de la pelota en el piso
-const SHOOT_RANGE := 10.0      ## distancia al arco desde la que la IA remata
+const BALL_Y := 0.16           ## altura de la pelota en el piso (= radio de la pelota)
+const SHOOT_RANGE := 13.0      ## distancia al arco desde la que la IA remata
+const LIFT_THRESHOLD := 16.0   ## potencia mínima para que el tiro se eleve
+const LIFT_FACTOR := 0.55      ## cuánto se eleva por potencia por encima del umbral
+const MAX_LIFT := 8.0          ## elevación (velocidad vertical) máxima
+const OUT_X := 33.0            ## la pelota está afuera si pasa esta X
+const OUT_Z := 20.0            ## la pelota está afuera si pasa esta Z
+const GK_RANGE_Z := 4.5        ## rango lateral (palo a palo) del arquero
 const SHOOT_SPEED := 20.0      ## velocidad del disparo de la IA
 const PASS_SPEED := 14.0       ## velocidad del pase
 const CHARGE_TIME := 0.9       ## segundos para cargar tiro/pase al máximo
@@ -39,11 +45,11 @@ const STATE_PLAYING := 1       ## partido en juego normal
 ## Formación base para un equipo que ataca hacia +X (se refleja para el otro).
 ## Orden: arquero, defensor, defensor, delantero, delantero.
 const FORMATION := [
-	Vector3(-18, 0, 0),
-	Vector3(-10, 0, -5),
-	Vector3(-10, 0, 5),
-	Vector3(-3, 0, -6),
-	Vector3(-3, 0, 6),
+	Vector3(-25, 0, 0),    # arquero (usa su propia lógica, ver _goalkeeper_point)
+	Vector3(-16, 0, -8),
+	Vector3(-16, 0, 8),
+	Vector3(-6, 0, -11),
+	Vector3(-6, 0, 11),
 ]
 
 var _ball = null
@@ -109,6 +115,13 @@ func _physics_process(delta: float) -> void:
 		_freeze_players_in_place()
 		_update_kickoff(delta)
 		return
+
+	# Pelota fuera de la cancha (o por debajo del piso) → reponerla en el centro.
+	if _holder == null:
+		var bp: Vector3 = _ball.global_position
+		if bp.y < -2.0 or absf(bp.x) > OUT_X or absf(bp.z) > OUT_Z:
+			_ball.reset(Vector3(0, BALL_Y, 0))
+			_loose_lock = LOOSE_LOCK
 
 	if Input.is_action_just_pressed("switch"):
 		_switch_to_nearest()
@@ -318,7 +331,9 @@ func _shoot(dir: Vector3, power: float) -> void:
 		d = Vector3.FORWARD
 	d = d.normalized()
 	_ball.global_position = _holder.global_position + _holder.facing * DRIBBLE_OFFSET + Vector3(0, BALL_Y, 0)
-	_ball.linear_velocity = d * power
+	# Si el tiro es fuerte, la pelota se eleva (para clavarla arriba o mandarla afuera).
+	var lift: float = clampf((power - LIFT_THRESHOLD) * LIFT_FACTOR, 0.0, MAX_LIFT)
+	_ball.linear_velocity = d * power + Vector3.UP * lift
 	_holder = null
 	_loose_lock = LOOSE_LOCK
 
@@ -341,42 +356,57 @@ func _best_pass_target(holder, attack_dir: float):
 				best = m
 	return best
 
-## Pase del humano: busca un compañero dentro de ~30° de donde mira; si no
-## hay nadie en ese cono, tira el pase para adelante (hacia donde mira).
+## Pase del humano: va al compañero más cercano en la dirección hacia la que
+## mirás, aunque no esté justo adelante. Si no hay ninguno razonable, sale recto.
 func _human_pass(power: float) -> void:
-	var mate = _pass_target_in_cone(_holder, deg_to_rad(30.0))
+	var mate = _best_human_pass_target()
 	if mate:
 		var to_mate: Vector3 = mate.global_position - _holder.global_position
 		_shoot(to_mate, power)
 	else:
 		_shoot(_holder.facing, power)
 
-## Compañero más cercano dentro de un cono alrededor de la dirección de mira.
-func _pass_target_in_cone(holder, max_angle: float):
-	var mates: Array = _team0 if holder.team == 0 else _team1
-	var hp: Vector3 = holder.global_position
-	var facing: Vector3 = holder.facing
+## Prioriza: (1) el compañero más cercano dentro de un cono ancho (~80°) de donde
+## mirás, (2) el más cercano del lado hacia el que mirás, (3) el más cercano en general.
+func _best_human_pass_target():
+	var mates: Array = _team0 if _holder.team == 0 else _team1
+	var hp: Vector3 = _holder.global_position
+	var facing: Vector3 = _holder.facing
 	facing.y = 0.0
-	if facing.length() < 0.01:
-		return null
-	facing = facing.normalized()
+	var has_facing: bool = facing.length() > 0.01
+	if has_facing:
+		facing = facing.normalized()
 
-	var best = null
-	var best_d := INF
+	var cone = null
+	var cone_d := INF
+	var front = null
+	var front_d := INF
+	var any = null
+	var any_d := INF
 	for m in mates:
-		if m == holder:
+		if m == _holder:
 			continue
-		var mp: Vector3 = m.global_position
-		var to_m: Vector3 = mp - hp
+		var to_m: Vector3 = m.global_position - hp
 		to_m.y = 0.0
 		var dist: float = to_m.length()
 		if dist < 0.5:
 			continue
-		var ang: float = facing.angle_to(to_m.normalized())
-		if ang <= max_angle and dist < best_d:
-			best_d = dist
-			best = m
-	return best
+		if dist < any_d:
+			any_d = dist
+			any = m
+		if has_facing:
+			var dir_m := to_m.normalized()
+			if facing.angle_to(dir_m) <= deg_to_rad(80.0) and dist < cone_d:
+				cone_d = dist
+				cone = m
+			if facing.dot(dir_m) > 0.0 and dist < front_d:
+				front_d = dist
+				front = m
+	if cone:
+		return cone
+	if front:
+		return front
+	return any
 
 ## Auto-cambio en defensa: si no tenés la pelota, controlás al más cercano a ella.
 func _auto_switch(ball_pos: Vector3) -> void:
@@ -471,26 +501,37 @@ func _dribble_target(p, attack_dir: float, defenders: Array) -> Vector3:
 ## Posición de formación (defensiva/neutral), que se desliza con la pelota.
 func _formation_point(index: int, attack_dir: float, ball_pos: Vector3) -> Vector3:
 	if index == 0:
-		var gk_x := -GOAL_X * attack_dir + attack_dir * 1.5
-		return Vector3(gk_x, 0, clampf(ball_pos.z * 0.3, -3.0, 3.0))
+		return _goalkeeper_point(attack_dir, ball_pos)
 	var base: Vector3 = FORMATION[index % FORMATION.size()]
 	var pos := Vector3(base.x * attack_dir, 0, base.z)
 	pos.x += ball_pos.x * 0.4
-	pos.x = clampf(pos.x, -21.0, 21.0)
-	pos.z = clampf(pos.z, -11.0, 11.0)
+	pos.x = clampf(pos.x, -29.0, 29.0)
+	pos.z = clampf(pos.z, -16.0, 16.0)
 	return pos
 
 ## Posición de APOYO: los compañeros suben adelante de la pelota para acompañar.
 func _support_point(index: int, attack_dir: float, ball_pos: Vector3) -> Vector3:
 	if index == 0:
-		var gk_x := -GOAL_X * attack_dir + attack_dir * 1.5
-		return Vector3(gk_x, 0, clampf(ball_pos.z * 0.3, -3.0, 3.0))
+		return _goalkeeper_point(attack_dir, ball_pos)
 	var base: Vector3 = FORMATION[index % FORMATION.size()]
-	var pos := Vector3(ball_pos.x + attack_dir * 6.0 + base.x * attack_dir * 0.15, 0, 0)
+	var pos := Vector3(ball_pos.x + attack_dir * 9.0 + base.x * attack_dir * 0.15, 0, 0)
 	pos.z = base.z + ball_pos.z * 0.3
-	pos.x = clampf(pos.x, -20.0, 20.0)
-	pos.z = clampf(pos.z, -11.0, 11.0)
+	pos.x = clampf(pos.x, -28.0, 28.0)
+	pos.z = clampf(pos.z, -16.0, 16.0)
 	return pos
+
+## Comportamiento del arquero: se queda cerca de su arco, se mueve de palo a
+## palo siguiendo la pelota, y sale un poco a achicar cuando la pelota se acerca.
+func _goalkeeper_point(attack_dir: float, ball_pos: Vector3) -> Vector3:
+	var line_x := -GOAL_X * attack_dir          # línea de su propio arco
+	var out := 1.5                              # base: un poco adelante de la línea
+	var dist_to_goal: float = absf(ball_pos.x - line_x)
+	if dist_to_goal < 16.0:
+		# cuanto más cerca la pelota, más sale a achicar (hasta ~4.5 m)
+		out += (16.0 - dist_to_goal) / 16.0 * 3.0
+	var gk_x := line_x + out * attack_dir
+	var gk_z := clampf(ball_pos.z * 0.7, -GK_RANGE_Z, GK_RANGE_Z)
+	return Vector3(gk_x, 0, gk_z)
 
 # ---------------------------------------------------------------------------
 # UTILIDADES

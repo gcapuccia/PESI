@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/boundary.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/goal.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/stands.tscn" id="8"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 
@@ -24,17 +25,17 @@ albedo_color = Color(0.2, 0.5, 0.2, 1)
 
 [sub_resource type="PlaneMesh" id="Mesh_field"]
 material = SubResource("Mat_field")
-size = Vector2(46, 25)
+size = Vector2(64, 38)
 
 [sub_resource type="BoxShape3D" id="Shape_field"]
-size = Vector3(46, 0.2, 25)
+size = Vector3(64, 0.2, 38)
 
 [sub_resource type="StandardMaterial3D" id="Mat_line"]
 albedo_color = Color(0.95, 0.95, 0.95, 1)
 
 [sub_resource type="BoxMesh" id="Mesh_cline"]
 material = SubResource("Mat_line")
-size = Vector3(0.3, 0.02, 25)
+size = Vector3(0.3, 0.02, 38)
 
 [sub_resource type="CylinderMesh" id="Mesh_spot"]
 material = SubResource("Mat_line")
@@ -44,8 +45,8 @@ height = 0.03
 
 [sub_resource type="TorusMesh" id="Mesh_circle"]
 material = SubResource("Mat_line")
-inner_radius = 3.6
-outer_radius = 3.8
+inner_radius = 5.8
+outer_radius = 6.0
 
 [node name="Main" type="Node3D" unique_id=792361374]
 script = ExtResource("3")
@@ -123,12 +124,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 0)
 
 [node name="Boundary" parent="." unique_id=1859393093 instance=ExtResource("5")]
 
+[node name="Stands" parent="." instance=ExtResource("8")]
+
 [node name="GoalRight" parent="." unique_id=1002881291 instance=ExtResource("6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 0)
 team_name = "Local"
 
 [node name="GoalLeft" parent="." unique_id=1466597651 instance=ExtResource("6")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -20, 0, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -28, 0, 0)
 team_name = "Visitante"
 
 [node name="HUD" parent="." instance=ExtResource("7")]

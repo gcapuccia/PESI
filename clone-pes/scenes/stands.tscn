@@ -1,0 +1,76 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/stands.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_seats"]
+albedo_color = Color(0.28, 0.32, 0.42, 1)
+
+[sub_resource type="PlaneMesh" id="Mesh_surround"]
+material = SubResource("Mat_floor")
+size = Vector2(130, 100)
+
+[sub_resource type="BoxMesh" id="Mesh_long"]
+material = SubResource("Mat_seats")
+size = Vector3(66, 2, 5)
+
+[sub_resource type="BoxMesh" id="Mesh_side"]
+material = SubResource("Mat_seats")
+size = Vector3(5, 2, 40)
+
+[node name="Stands" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Surround" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+mesh = SubResource("Mesh_surround")
+
+[node name="N1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 20)
+mesh = SubResource("Mesh_long")
+
+[node name="N2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 25)
+mesh = SubResource("Mesh_long")
+
+[node name="N3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, 30)
+mesh = SubResource("Mesh_long")
+
+[node name="S1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -20)
+mesh = SubResource("Mesh_long")
+
+[node name="S2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, -25)
+mesh = SubResource("Mesh_long")
+
+[node name="S3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, -30)
+mesh = SubResource("Mesh_long")
+
+[node name="E1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 1, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="E2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 2.6, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="E3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, 4.2, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="W1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, 1, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="W2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 2.6, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="W3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -43, 4.2, 0)
+mesh = SubResource("Mesh_side")
