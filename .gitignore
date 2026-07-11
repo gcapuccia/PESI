@@ -1,0 +1,14 @@
+# Packs de assets comprimidos (grandes; los modelos usados ya están
+# extraídos en clone-pes/assets/). GitHub además rechaza archivos > 100 MB.
+*.zip
+
+# Config local de Claude Code
+.claude/
+
+# Cache de importación de Godot (se regenera al abrir el proyecto)
+clone-pes/.godot/
+
+# Sistema operativo / editores
+Thumbs.db
+desktop.ini
+.DS_Store

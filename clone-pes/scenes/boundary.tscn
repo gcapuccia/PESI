@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_board"]
+albedo_color = Color(0.85, 0.85, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_long"]
+material = SubResource("Mat_board")
+size = Vector3(47, 1, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_side"]
+material = SubResource("Mat_board")
+size = Vector3(0.5, 1, 25)
+
+[sub_resource type="BoxShape3D" id="Shape_long"]
+size = Vector3(47, 1, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape_side"]
+size = Vector3(0.5, 1, 25)
+
+[node name="Boundary" type="StaticBody3D"]
+
+[node name="NorthMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 12.5)
+mesh = SubResource("Mesh_long")
+
+[node name="NorthCol" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 12.5)
+shape = SubResource("Shape_long")
+
+[node name="SouthMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -12.5)
+mesh = SubResource("Mesh_long")
+
+[node name="SouthCol" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -12.5)
+shape = SubResource("Shape_long")
+
+[node name="EastMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0.5, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="EastCol" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0.5, 0)
+shape = SubResource("Shape_side")
+
+[node name="WestMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0.5, 0)
+mesh = SubResource("Mesh_side")
+
+[node name="WestCol" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0.5, 0)
+shape = SubResource("Shape_side")

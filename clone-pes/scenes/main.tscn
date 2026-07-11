@@ -1,0 +1,134 @@
+[gd_scene format=3 uid="uid://dve51707vy4br"]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ball.tscn" id="2"]
+[ext_resource type="Script" uid="uid://dypwhktr6yehp" path="res://scripts/main.gd" id="3"]
+[ext_resource type="Script" uid="uid://bh5mntg5pfsvy" path="res://scripts/camera_follow.gd" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/boundary.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/goal.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+sky = SubResource("Sky")
+ambient_light_source = 3
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_field"]
+albedo_color = Color(0.2, 0.5, 0.2, 1)
+
+[sub_resource type="PlaneMesh" id="Mesh_field"]
+material = SubResource("Mat_field")
+size = Vector2(46, 25)
+
+[sub_resource type="BoxShape3D" id="Shape_field"]
+size = Vector3(46, 0.2, 25)
+
+[sub_resource type="StandardMaterial3D" id="Mat_line"]
+albedo_color = Color(0.95, 0.95, 0.95, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_cline"]
+material = SubResource("Mat_line")
+size = Vector3(0.3, 0.02, 25)
+
+[sub_resource type="CylinderMesh" id="Mesh_spot"]
+material = SubResource("Mat_line")
+top_radius = 0.4
+bottom_radius = 0.4
+height = 0.03
+
+[sub_resource type="TorusMesh" id="Mesh_circle"]
+material = SubResource("Mat_line")
+inner_radius = 3.6
+outer_radius = 3.8
+
+[node name="Main" type="Node3D" unique_id=792361374]
+script = ExtResource("3")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1946566039]
+environment = SubResource("Env")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=654098919]
+transform = Transform3D(1, 0, 0, 0, 0.50000024, -0.8660253, 0, 0.8660253, 0.50000024, -0.19000232, 11.009225, -1.0523272)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1215673193]
+transform = Transform3D(0.9999905, 0.002628685, -0.0034826077, 0, 0.7981559, 0.60245097, 0.004363318, -0.60244524, 0.7981483, 0.5347223, 9.457642, 17.545044)
+script = ExtResource("4")
+target_path = NodePath("../Ball")
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=860473468]
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground" unique_id=223594007]
+mesh = SubResource("Mesh_field")
+
+[node name="Collision" type="CollisionShape3D" parent="Ground" unique_id=2122999240]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("Shape_field")
+
+[node name="CenterLine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("Mesh_cline")
+
+[node name="CenterCircle" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("Mesh_circle")
+
+[node name="CenterSpot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("Mesh_spot")
+
+[node name="T0_0_GK" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 0)
+
+[node name="T0_1_DEF" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -5)
+
+[node name="T0_2_DEF" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 5)
+
+[node name="T0_3_FWD" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -6)
+
+[node name="T0_4_FWD" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 6)
+
+[node name="T1_0_GK" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 0)
+team = 1
+
+[node name="T1_1_DEF" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -5)
+team = 1
+
+[node name="T1_2_DEF" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 5)
+team = 1
+
+[node name="T1_3_FWD" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -6)
+team = 1
+
+[node name="T1_4_FWD" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 6)
+team = 1
+
+[node name="Ball" parent="." unique_id=1405640481 instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 0)
+
+[node name="Boundary" parent="." unique_id=1859393093 instance=ExtResource("5")]
+
+[node name="GoalRight" parent="." unique_id=1002881291 instance=ExtResource("6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 0)
+team_name = "Local"
+
+[node name="GoalLeft" parent="." unique_id=1466597651 instance=ExtResource("6")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -20, 0, 0)
+team_name = "Visitante"
+
+[node name="HUD" parent="." instance=ExtResource("7")]
